@@ -2,7 +2,7 @@
     'use strict';
 
     var pluginName = 'UAFix Parser';
-    var pluginVersion = '1.0.1'; // Оновили версію
+    var pluginVersion = '1.0.2';
 
     function init() {
         console.log(pluginName + ' v' + pluginVersion + ' завантажено!');
@@ -12,7 +12,7 @@
             Lampa.Storage.set('uafix_domain', defaultDomain);
         }
 
-        // Створюємо саму вкладку (це працює у всіх версіях)
+        // Створюємо вкладку в налаштуваннях
         if (Lampa.SettingsApi && Lampa.SettingsApi.addComponent) {
             Lampa.SettingsApi.addComponent({
                 component: 'uafix_settings',
@@ -30,31 +30,32 @@
         
         // Коли користувач заходить у наше меню "Налаштування UAFix"
         if (e.type == 'settings' && e.name == 'uafix_settings') {
-            var body = e.body;
             
-            // Створюємо HTML-елемент нашого налаштування (надійний старий метод)
-            var item = $('<div class="settings-param selector" data-type="input" data-name="uafix_domain"><div class="settings-param__name">Домен сайту UAFix</div><div class="settings-param__value"></div><div class="settings-param__descr">Вкажіть актуальний домен (наприклад: https://uafix.net)</div></div>');
-            
-            // Вставляємо туди поточний збережений домен
             var currentDomain = Lampa.Storage.get('uafix_domain') || 'https://uafix.net';
-            item.find('.settings-param__value').text(currentDomain);
             
-            // Що робити, коли натискають "ОК" на пульті або мишкою по цьому полю
-            item.on('hover:enter', function () {
+            // 1. Готуємо звичайний HTML-код нашого поля
+            var html = '<div class="settings-param selector" data-type="input" data-name="uafix_domain">' +
+                           '<div class="settings-param__name">Домен сайту UAFix</div>' +
+                           '<div class="settings-param__value">' + currentDomain + '</div>' +
+                           '<div class="settings-param__descr">Вкажіть актуальний домен (наприклад: https://uafix.net)</div>' +
+                       '</div>';
+            
+            // 2. Спочатку додаємо його у вікно Лампи
+            e.body.append(html);
+            
+            // 3. Тепер знаходимо це поле вже на екрані і додаємо реакцію на натискання (hover:enter)
+            e.body.find('[data-name="uafix_domain"]').on('hover:enter', function () {
                 Lampa.Input.edit({
                     title: 'Домен сайту UAFix',
                     value: Lampa.Storage.get('uafix_domain'),
                     free: true,
                     nosave: false
                 }, function (new_value) {
-                    // Зберігаємо нове значення і оновлюємо текст на екрані
+                    // Зберігаємо нове значення і оновлюємо текст
                     Lampa.Storage.set('uafix_domain', new_value);
-                    item.find('.settings-param__value').text(new_value);
+                    e.body.find('[data-name="uafix_domain"] .settings-param__value').text(new_value);
                 });
             });
-            
-            // Виводимо наше поле на екран Лампи
-            body.append(item);
         }
     });
 
