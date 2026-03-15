@@ -1,24 +1,27 @@
 (function () {
     'use strict';
 
-    // Одразу повідомляємо, що файл прочитано
-    Lampa.Noty.show('✅ UAFix v1.1.2 завантажено!');
+    Lampa.Noty.show('✅ UAFix: Йдемо напролом!');
 
-    // Реєструємо кнопку ОДРАЗУ, без таймерів і чекань (як це робить online_mod)
-    Lampa.Listener.follow('full', function (e) {
-        if (e.type == 'build') {
+    // Кожні півсекунди скануємо ВЕСЬ додаток
+    setInterval(function() {
+        
+        // Знаходимо всі блоки кнопок, які взагалі існують у Лампі зараз
+        $('.full-start__buttons').each(function() {
             
-            // Створюємо кнопку
-            var btn = $('<div class="full-start__button selector" style="background: #e50914;"><span>🔴 UAFix</span></div>');
-            
-            // Дія при натисканні
-            btn.on('hover:enter click', function () {
-                Lampa.Noty.show('Ура! Кнопка працює!');
-            });
+            // Якщо в цьому конкретному блоці ще немає нашої кнопки - додаємо!
+            if ($(this).find('.uafix-brute').length === 0) {
+                
+                var btn = $('<div class="full-start__button selector uafix-brute" style="background: #e50914; border: 1px solid white;"><span>🔥 UAFix</span></div>');
+                
+                btn.on('hover:enter click', function() {
+                    Lampa.Noty.show('Нарешті працює!');
+                });
 
-            // Додаємо її СУВОРО в поточний відкритий фільм
-            e.html.find('.full-start__buttons').append(btn);
-        }
-    });
+                $(this).append(btn);
+            }
+        });
+
+    }, 500);
 
 })();
