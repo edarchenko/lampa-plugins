@@ -1,39 +1,24 @@
 (function () {
     'use strict';
 
-    var pluginVersion = '1.1.1';
+    // Одразу повідомляємо, що файл прочитано
+    Lampa.Noty.show('✅ UAFix v1.1.2 завантажено!');
 
-    function startPlugin() {
-        Lampa.Noty.show('✅ UAFix v' + pluginVersion + ' завантажено!');
+    // Реєструємо кнопку ОДРАЗУ, без таймерів і чекань (як це робить online_mod)
+    Lampa.Listener.follow('full', function (e) {
+        if (e.type == 'build') {
+            
+            // Створюємо кнопку
+            var btn = $('<div class="full-start__button selector" style="background: #e50914;"><span>🔴 UAFix</span></div>');
+            
+            // Дія при натисканні
+            btn.on('hover:enter click', function () {
+                Lampa.Noty.show('Ура! Кнопка працює!');
+            });
 
-        // ГРУБИЙ МЕТОД: Кожну секунду скануємо екран (працює незалежно від подій Лампи)
-        setInterval(function() {
-            // Шукаємо панель з кнопками на екрані
-            var buttonsPanel = $('.full-start__buttons, .info__buttons, .view--buttons').first();
+            // Додаємо її СУВОРО в поточний відкритий фільм
+            e.html.find('.full-start__buttons').append(btn);
+        }
+    });
 
-            // Якщо панель є, а нашої кнопки uafix-test-btn ще немає:
-            if (buttonsPanel.length > 0 && $('.uafix-test-btn').length === 0) {
-                
-                // Створюємо кнопку
-                var btn = $('<div class="full-start__button selector uafix-test-btn" style="background: #e50914;"><span>🔴 UAFix Test</span></div>');
-                
-                // Реакція на клік пульта/мишки
-                btn.on('hover:enter click', function () {
-                    Lampa.Noty.show('Ура! Кнопка натиснута!');
-                });
-
-                // Вставляємо кнопку в панель
-                buttonsPanel.append(btn);
-            }
-        }, 1000); // 1000 мілісекунд = 1 секунда
-    }
-
-    // Запуск
-    if (window.appready) {
-        startPlugin();
-    } else {
-        Lampa.Listener.follow('app', function (e) {
-            if (e.type == 'ready') startPlugin();
-        });
-    }
 })();
