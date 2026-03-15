@@ -1,27 +1,16 @@
 (function () {
     'use strict';
 
-    Lampa.Noty.show('✅ UAFix: Йдемо напролом!');
+    Lampa.Noty.show('✅ UAFix: Запуск плаваючої кнопки');
 
-    // Кожні півсекунди скануємо ВЕСЬ додаток
-    setInterval(function() {
-        
-        // Знаходимо всі блоки кнопок, які взагалі існують у Лампі зараз
-        $('.full-start__buttons').each(function() {
-            
-            // Якщо в цьому конкретному блоці ще немає нашої кнопки - додаємо!
-            if ($(this).find('.uafix-brute').length === 0) {
-                
-                var btn = $('<div class="full-start__button selector uafix-brute" style="background: #e50914; border: 1px solid white;"><span>🔥 UAFix</span></div>');
-                
-                btn.on('hover:enter click', function() {
-                    Lampa.Noty.show('Нарешті працює!');
-                });
+    // Створюємо величезну кнопку, яка буде висіти ПОВЕРХ усього екрану в правому нижньому куті
+    var floatingBtn = $('<div style="position: fixed; bottom: 50px; right: 50px; z-index: 999999; background: red; color: white; padding: 20px 40px; font-size: 24px; font-weight: bold; border-radius: 10px; cursor: pointer; border: 3px solid white; box-shadow: 0 0 20px rgba(0,0,0,0.8);">🔥 UAFix ТЕСТ</div>');
 
-                $(this).append(btn);
-            }
-        });
+    floatingBtn.on('click', function() {
+        Lampa.Noty.show('Нарешті! Кнопка клікається!');
+    });
 
-    }, 500);
+    // Вставляємо її прямо в тіло сторінки (body), щоб Лампа не змогла її видалити
+    $('body').append(floatingBtn);
 
 })();
