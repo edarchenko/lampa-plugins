@@ -1,16 +1,75 @@
 (function () {
     'use strict';
 
-    Lampa.Noty.show('✅ UAFix: Запуск плаваючої кнопки');
+    var pluginVersion = '2.0.0'; 
+    var DOMAIN = 'https://uafix.net';
 
-    // Створюємо величезну кнопку, яка буде висіти ПОВЕРХ усього екрану в правому нижньому куті
-    var floatingBtn = $('<div style="position: fixed; bottom: 50px; right: 50px; z-index: 999999; background: red; color: white; padding: 20px 40px; font-size: 24px; font-weight: bold; border-radius: 10px; cursor: pointer; border: 3px solid white; box-shadow: 0 0 20px rgba(0,0,0,0.8);">🔥 UAFix ТЕСТ</div>');
+    Lampa.Noty.show('✅ UAFix: Інтегровано в джерела!');
 
-    floatingBtn.on('click', function() {
-        Lampa.Noty.show('Нарешті! Кнопка клікається!');
+    // 1. Реєструємо наш парсер як повноцінне джерело (компонент)
+    Lampa.Component.add('uafix', {
+        name: 'UAFix',
+        version: pluginVersion,
+        component: function(object) {
+            var network = new Lampa.Reguest();
+            var html = $('<div><div class="empty__title">Шукаємо фільм на UAFix...</div></div>');
+            
+            this.create = function() {
+                var title = object.movie.title || object.movie.name;
+                var url = DOMAIN + '/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story=' + encodeURIComponent(title);
+                
+                network.silent(url, function(res) {
+                    html.empty().append('<div class="empty__title">✅ Відповідь отримано! Готуємо парсинг...</div>');
+                    // ТУТ БУДЕ ЛОГІКА ПАРСИНГУ
+                }, function() {
+                    html.empty().append('<div class="empty__title">❌ Помилка з\'єднання з сайтом</div>');
+                });
+                
+                return this.render();
+            };
+            
+            this.render = function() { return html; };
+            this.destroy = function() { network.clear(); html.remove(); };
+        }
     });
 
-    // Вставляємо її прямо в тіло сторінки (body), щоб Лампа не змогла її видалити
-    $('body').append(floatingBtn);
+    // 2. Перехоплюємо внутрішній навігатор Лампи (ніякого втручання в дизайн!)
+    var originalPush = Lampa.Activity.push;
+    
+    Lampa.Activity.push = function (obj) {
+        // Коли Лампа намагається відкрити плеєр (ти натиснув "Смотреть")
+        if (obj.component === 'online' || obj.component === 'mod') {
+            
+            // Викликаємо рідне меню вибору Лампи
+            Lampa.Select.show({
+                title: 'Оберіть джерело',
+                items: [
+                    { title: '🎬 UAFix Parser', action: 'uafix' },
+                    { title: '🌐 Інші балансери (Стандарт)', action: 'default' }
+                ],
+                onSelect: function (a) {
+                    if (a.action === 'uafix') {
+                        // Відкриваємо наш парсер
+                        originalPush.call(Lampa.Activity, {
+                            component: 'uafix',
+                            title: 'UAFix',
+                            movie: obj.movie,
+                            page: 1
+                        });
+                    } else {
+                        // Відкриваємо стандартні балансери (online_mod тощо)
+                        originalPush.call(Lampa.Activity, obj);
+                    }
+                },
+                onBack: function () {
+                    Lampa.Controller.toggle('full_start');
+                }
+            });
+            return; // Зупиняємо стандартну дію
+        }
+        
+        // Для всіх інших кліків (меню, налаштування) працюємо як завжди
+        return originalPush.call(Lampa.Activity, obj);
+    };
 
 })();
