@@ -2,66 +2,64 @@
     'use strict';
 
     var pluginName = 'UAFix Parser';
-    var pluginVersion = '1.0.4'; 
+    var pluginVersion = '1.0.5'; 
     var DOMAIN = 'https://uafix.net';
 
-    console.log(pluginName + ' v' + pluginVersion + ' завантажено успішно!');
+    // Функція, яка показує, що ми успішно завантажились
+    function startPlugin() {
+        console.log(pluginName + ' v' + pluginVersion + ' завантажено успішно!');
+        // ПОКАЗУЄМО ПОВІДОМЛЕННЯ НА ЕКРАНІ
+        setTimeout(function() {
+            Lampa.Noty.show('✅ UAFix плагін (v' + pluginVersion + ') завантажено!');
+        }, 2000);
+    }
 
-    // 1. Слухаємо подію "full" (це відкриття сторінки з інформацією про фільм)
+    // Слухаємо подію відкриття фільму
     Lampa.Listener.follow('full', function (e) {
         if (e.type == 'build') {
             
-            // 2. Створюємо нашу кнопку
-            var button = $('<div class="full-start__button selector button--icon" data-type="uafix"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M10,16.5V7.5L16,12L10,16.5Z" /></svg><span>UAFix</span></div>');
+            // Створюємо червону кнопку
+            var button = $('<div class="full-start__button selector button--icon" data-type="uafix" style="background-color: #e50914;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M10,16.5V7.5L16,12L10,16.5Z" /></svg><span>UAFix Play</span></div>');
 
-            // 3. Додаємо дію при натисканні на кнопку
+            // Дія при натисканні
             button.on('hover:enter', function () {
-                // e.data.movie містить всі дані про фільм, який ми зараз відкрили
-                searchOnUAFix(e.data.movie);
+                var title = e.data.movie.title || e.data.movie.name;
+                Lampa.Noty.show('Шукаємо на UAFix: ' + title);
+                
+                var url = DOMAIN + '/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story=' + encodeURIComponent(title);
+                
+                var network = new Lampa.Reguest();
+                network.timeout(10000);
+                network.silent(url, function (html) {
+                    Lampa.Noty.show('✅ Відповідь від UAFix отримано!');
+                }, function (a, c) {
+                    Lampa.Noty.show('❌ Помилка пошуку на UAFix');
+                });
             });
 
-            // 4. Вставляємо кнопку в панель кнопок під постером
-            e.html.find('.full-start__buttons').append(button);
+            // Шукаємо місце для вставки (пробуємо різні класи тем Лампи)
+            var wrap = e.html.find('.full-start__buttons'); // Стандартна тема
+            if (!wrap.length) wrap = e.html.find('.view--buttons'); // Тема Cub
+            if (!wrap.length) wrap = e.html.find('.info__buttons'); // Інші теми
+
+            // Вставляємо кнопку
+            if (wrap.length) {
+                wrap.append(button);
+            } else {
+                console.log('Не знайдено блок кнопок у цій темі Лампи');
+            }
         }
     });
 
-    // Функція пошуку
-    function searchOnUAFix(movie) {
-        // Беремо назву фільму (title - для фільмів, name - для серіалів)
-        var title = movie.title || movie.name;
-        
-        // Формуємо посилання для пошуку, кодуючи пробіли та кирилицю
-        var url = DOMAIN + '/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story=' + encodeURIComponent(title);
-
-        // Показуємо повідомлення користувачу в Лампі
-        Lampa.Noty.show('Шукаємо на UAFix: ' + title);
-        console.log('Відправляємо запит на:', url);
-
-        // Використовуємо вбудований інструмент Лампи для мережевих запитів
-        var network = new Lampa.Reguest(); // (Так, у розробника Лампи тут помилка в слові Request, це нормально 😊)
-        network.timeout(10000);
-
-        // Робимо тихий запит (silent)
-        network.silent(url, function (html) {
-            console.log('Успіх! Отримано HTML:', html.substring(0, 300) + '...');
-            Lampa.Noty.show('Відповідь від UAFix отримано!');
-            
-            // ТУТ МИ БУДЕМО ПАРСИТИ HTML (наступний крок)
-            parseSearchResults(html);
-
-        }, function (a, c) {
-            console.log('Помилка запиту:', a, c);
-            Lampa.Noty.show('Помилка пошуку на UAFix');
+    // Запускаємо плагін
+    if (window.appready) {
+        startPlugin();
+    } else {
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type == 'ready') {
+                startPlugin();
+            }
         });
-    }
-
-    // Тимчасова функція для підготовки до парсингу
-    function parseSearchResults(html) {
-        // Ми використаємо jQuery (він вбудований в Лампу), щоб шукати елементи в HTML, так само як шукали б через HtmlAgilityPack в C#
-        var dom = $(html);
-        
-        // Тут нам треба знайти блоки з результатами пошуку
-        console.log('Готуємось до парсингу результатів...');
     }
 
 })();
